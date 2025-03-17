@@ -1,0 +1,92 @@
+config:
+  target: "http://localhost:4000"
+  phases:
+    - duration: 60
+      arrivalRate: 5
+      name: Warm up
+    - duration: 120
+      arrivalRate: 5
+      rampTo: 50
+      name: Ramp up load
+    - duration: 300
+      arrivalRate: 50
+      name: Sustained load
+    - duration: 60
+      arrivalRate: 10
+      name: Scale down
+  defaults:
+    headers:
+      Content-Type: "application/json"
+      Accept: "application/json"
+  http:
+    timeout: 10 # Wait 10 seconds before timing out requests
+
+scenarios:
+  - name: "API Health Check Flow"
+    weight: 10
+    flow:
+      - get:
+          url: "/health"
+          expect:
+            - statusCode: 200
+            - contentType: "application/json"
+            - hasProperty: "status"
+            - equals:
+                "$.status": "UP"
+
+  - name: "Welcome Message Flow"
+    weight: 5
+    flow:
+      - get:
+          url: "/"
+          expect:
+            - statusCode: 200
+            - contentType: "application/json"
+
+  - name: "User Management Flow"
+    weight: 60
+    flow:
+      - get:
+          url: "/users"
+          expect:
+            - statusCode: 200
+            - contentType: "application/json"
+
+      - post:
+          url: "/users"
+          json:
+            name: "Test User {{ $randomString(10) }}"
+          capture:
+            - json: "$.id"
+              as: "userId"
+          expect:
+            - statusCode: 201
+
+      - get:
+          url: "/users/{{ userId }}"
+          expect:
+            - statusCode: 200
+            - contentType: "application/json"
+            - hasProperty: "name"
+
+      # Test non-existent user
+      - get:
+          url: "/users/999"
+          expect:
+            - statusCode: 404
+
+  - name: "Error Test Flow"
+    weight: 25
+    flow:
+      - get:
+          url: "/users/error/test"
+          # Note: We don't assert on status code here because it can
+          # be either 200 or 500 due to random error simulation
+
+  - name: "Non-existent Route Flow"
+    weight: 5
+    flow:
+      - get:
+          url: "/this-route-does-not-exist"
+          expect:
+            - statusCode: 404
