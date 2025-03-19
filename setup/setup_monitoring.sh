@@ -235,16 +235,25 @@ route:
 receivers:
 - name: 'slack_notifications'
   slack_configs:
-    - channel: '#alerts'
-      send_resolved: true
-      title: "{{range.Alerts}}{{.Annotations.summary}}{{end}}"
-      text: >-
-       {{range.Alerts}}
-       *Alert:* {{ .Annotations.summary }}
-       *Description:* {{.Annotations.description}}
-       *Serverity* {{.Labels.severity}}
-       *Instance* {{.Labels.instance}}
-       {{end}}
+  - channel: '#alerts'
+    send_resolved: true
+    title: '{{ if eq .Status "resolved" }}✅ RESOLVED{{ else }}🚨 FIRING{{ end }} - {{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+    text: >-
+      {{ if eq .Status "resolved" }}
+      *Alert Resolved:* {{ range .Alerts }}{{ .Annotations.summary }}{{ end }}
+      {{ else }}
+      {{ range .Alerts }}
+      *Alert:* {{ .Annotations.summary }}
+
+
+      *Description:* {{ .Annotations.description }}
+
+      *Severity:* {{ .Labels.severity }}
+
+
+      *Instance:* {{ .Labels.instance }}
+      {{ end }}
+      {{ end }}
 
 inhibit_rules:
   - source_match:
