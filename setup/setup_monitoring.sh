@@ -20,6 +20,7 @@ PROMETHEUS_VERSION="3.2.1"
 NODE_EXPORTER_VERSION="1.9.0"
 ALERTMANAGER_VERSION="0.28.1"
 GRAFANA_VERSION="11.5.2"
+SLACK_WEBHOOK_URL="https://hooks.slack.com/services/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"
 
 # Architektur erkennen
 if [[ "$(uname -m)" == "arm64" ]] || [[ "$(uname -m)" == "aarch64" ]]; then
@@ -66,7 +67,7 @@ sleep 5
 
 echo -e "${GREEN}=== Prepare Installation Script ===${NC}"
 # Erstelle ein temporäres Script für die Installation
-cat > /tmp/monitoring_install.sh << 'EOF'
+cat > ./monitoring_install.sh << 'EOF'
 #!/bin/bash
 set -e
 
@@ -147,6 +148,7 @@ groups:
     for: 2m
     labels:
       severity: critical
+      instance: "api-server"
     annotations:
       summary: "Hohe HTTP Error Rate"
       description: "Die HTTP Error Rate liegt bei {{ $value | humanizePercentage }} in den letzten 5 Minuten (Schwellwert: 5%)."
@@ -221,17 +223,28 @@ rm -rf alertmanager-${ALERTMANAGER_VERSION}.linux-${ARCH}*
 cat > /tmp/alertmanager.yml << 'EOALERTMANAGER'
 global:
   resolve_timeout: 5m
+  slack_api_url: {{ SLACK_WEBHOOK_URL }}
 
 route:
   group_by: ['alertname']
   group_wait: 30s
   group_interval: 5m
   repeat_interval: 4h
-  receiver: 'default-receiver'
+  receiver: 'slack_notifications'
 
 receivers:
-- name: 'default-receiver'
-  # Hier könntest du später Slack, Email etc. konfigurieren
+- name: 'slack_notifications'
+  slack_configs:
+    - channel: '#alerts'
+      send_resolved: true
+      title: "{{range.Alerts}}{{.Annotations.summary}}{{end}}"
+      text: >-
+       {{range.Alerts}}
+       *Alert:* {{ .Annotations.summary }}
+       *Description:* {{.Annotations.description}}
+       *Serverity* {{.Labels.severity}}
+       *Instance* {{.Labels.instance}}
+       {{end}}
 
 inhibit_rules:
   - source_match:
@@ -329,7 +342,7 @@ fi
 # Script in die VM kopieren und ausführen
 echo -e "${GREEN}=== Kopiere Installations-Script in die VM ===${NC}"
 multipass transfer monitoring_install.sh ${VM_NAME}:/home/ubuntu/monitoring_install.sh
-multipass exec ${VM_NAME} -- chmod +x /home/ubuntu/monitoring_install.sh
+multipass exec ${VM_NAME} -- bash -c "chmod +x /home/ubuntu/monitoring_install.sh"
 
 echo -e "${GREEN}=== Führe Installations-Script in der VM aus ===${NC}"
 echo "Die Installation kann einige Minuten dauern..."
