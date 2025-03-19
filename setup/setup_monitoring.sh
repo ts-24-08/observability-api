@@ -319,16 +319,16 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     sed -i '' "s/%ARCH%/${ARCH}/g" /tmp/monitoring_install.sh
 else
     # Linux und Git Bash für Windows
-    sed -i "s/%PROMETHEUS_VERSION%/${PROMETHEUS_VERSION}/g" /tmp/monitoring_install.sh
-    sed -i "s/%NODE_EXPORTER_VERSION%/${NODE_EXPORTER_VERSION}/g" /tmp/monitoring_install.sh
-    sed -i "s/%ALERTMANAGER_VERSION%/${ALERTMANAGER_VERSION}/g" /tmp/monitoring_install.sh
-    sed -i "s/%GRAFANA_VERSION%/${GRAFANA_VERSION}/g" /tmp/monitoring_install.sh
-    sed -i "s/%ARCH%/${ARCH}/g" /tmp/monitoring_install.sh
+    sed -i "s/%PROMETHEUS_VERSION%/${PROMETHEUS_VERSION}/g" monitoring_install.sh
+    sed -i "s/%NODE_EXPORTER_VERSION%/${NODE_EXPORTER_VERSION}/g" monitoring_install.sh
+    sed -i "s/%ALERTMANAGER_VERSION%/${ALERTMANAGER_VERSION}/g" monitoring_install.sh
+    sed -i "s/%GRAFANA_VERSION%/${GRAFANA_VERSION}/g" monitoring_install.sh
+    sed -i "s/%ARCH%/${ARCH}/g" monitoring_install.sh
 fi
 
 # Script in die VM kopieren und ausführen
 echo -e "${GREEN}=== Kopiere Installations-Script in die VM ===${NC}"
-multipass transfer /tmp/monitoring_install.sh ${VM_NAME}:/home/ubuntu/monitoring_install.sh
+multipass transfer monitoring_install.sh ${VM_NAME}:/home/ubuntu/monitoring_install.sh
 multipass exec ${VM_NAME} -- chmod +x /home/ubuntu/monitoring_install.sh
 
 echo -e "${GREEN}=== Führe Installations-Script in der VM aus ===${NC}"
