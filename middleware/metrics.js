@@ -19,6 +19,13 @@ const httpResponseDuration = new promClient.Histogram({
   registers: [register],
 });
 
+const userRegistrationCounter = new promClient.Counter({
+  name: "user_registration_total",
+  help: "Total number of user registrations",
+  labelNames: ["status"],
+  registers: [register],
+});
+
 export const requestCounter = (req, res, next) => {
   const end = res.end;
   res.end = function (...args) {
@@ -51,6 +58,10 @@ export const responseTimeHistogram = (req, res, next) => {
     end.apply(res, args);
   };
   next();
+};
+
+export const incrementUserRegistration = () => {
+  userRegistrationCounter.inc({ status: "success" });
 };
 
 export const getMetrics = async (req, res) => {

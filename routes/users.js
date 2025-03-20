@@ -1,5 +1,6 @@
 import express from "express";
 import { logger } from "../middleware/logger.js";
+import { incrementUserRegistration } from "../middleware/metrics.js";
 
 export const router = express.Router();
 
@@ -41,6 +42,7 @@ router.post("/", (req, res) => {
     name: req.body.name,
   };
   users.push(newUser);
+  incrementUserRegistration();
   logger.info(`Created new user: ${newUser.name}`);
   res.status(201).json(newUser);
 });
