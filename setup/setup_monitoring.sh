@@ -20,7 +20,7 @@ PROMETHEUS_VERSION="3.2.1"
 NODE_EXPORTER_VERSION="1.9.0"
 ALERTMANAGER_VERSION="0.28.1"
 GRAFANA_VERSION="11.5.2"
-SLACK_WEBHOOK_URL="https://hooks.slack.com/services/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"
+SLACK_WEBHOOK_URL=WEBHOOK
 
 # Architektur erkennen
 if [[ "$(uname -m)" == "arm64" ]] || [[ "$(uname -m)" == "aarch64" ]]; then
